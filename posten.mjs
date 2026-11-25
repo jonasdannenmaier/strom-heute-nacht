@@ -25,7 +25,8 @@ const TROCKEN = process.env.TROCKEN === '1';
 const X_KONTO = (process.env.X_KONTO || 'jonas_ampena').toLowerCase();
 const IG_KONTO = (process.env.IG_KONTO || 'getampena').toLowerCase();
 const BILD_BASIS = (process.env.BILD_BASIS || '').replace(/\/$/, '');
-const SCHLUESSEL = process.env.BUFFER_API_KEY || '';
+const SCHLUESSEL = (process.env.BUFFER_API_KEY || '').trim();
+const warnOderStopp = (grund) => { if (TROCKEN) console.log(`HINWEIS (Probelauf, echt würde hier gestoppt): ${grund}`); else auffaellig(grund); };
 
 const marke = join(hier, 'gepostet', `${tag}.json`);
 if (existsSync(marke)) { console.log(`${tag}: schon gepostet (${marke}).`); process.exit(0); }
@@ -34,7 +35,7 @@ const kz = JSON.parse(readFileSync(join(hier, 'ausgabe', `strom-${tag}.json`), '
 if (kz.tag !== tag) auffaellig(`Kennzahlen gehören zu ${kz.tag}, nicht zu ${tag}`);
 if (tag !== istTag(jetzt)) auffaellig(`${tag} ist nicht heute (${istTag(jetzt)}); alte Tage werden nicht nachgepostet`);
 const stundeJetzt = Number(berlin(jetzt, { hour: 'numeric', hourCycle: 'h23' }).replace(/\D/g, ''));
-if (stundeJetzt >= 18) auffaellig(`schon ${stundeJetzt} Uhr; nach 18 Uhr ist der Beitrag zu spät`);
+if (stundeJetzt >= 18) warnOderStopp(`schon ${stundeJetzt} Uhr; nach 18 Uhr ist der Beitrag zu spät`);
 
 const wochentag = berlin(jetzt, { weekday: 'short' }); // Mo., Di., Mi., …
 const mitInstagram = /^(Mo|Mi|Fr)/.test(wochentag);
@@ -44,7 +45,7 @@ const bildUrl = `${BILD_BASIS}/${kz.bild}`;
 
 // Das Bild muss öffentlich erreichbar sein, bevor Buffer es holt (nach dem Hochladen kann das einen Moment dauern).
 async function bildPruefen() {
-  for (let versuch = 1; versuch <= 12; versuch++) {
+  for (let versuch = 1; versuch <= (TROCKEN ? 2 : 12); versuch++) {
     try {
       const r = await fetch(bildUrl, { method: 'GET', cache: 'no-store' });
       const art = r.headers.get('content-type') || '';
@@ -101,9 +102,9 @@ console.log(kz.text);
 if (TROCKEN && !SCHLUESSEL) { console.log('TROCKEN ohne Schlüssel: Buffer nicht gefragt, nichts gepostet.'); process.exit(0); }
 if (!SCHLUESSEL) auffaellig('BUFFER_API_KEY fehlt');
 
-const groesse = await bildPruefen();
-if (!groesse) auffaellig(`Bild nicht öffentlich als JPEG erreichbar: ${bildUrl}`);
 const { x, ig } = await kanalSuchen();
+const groesse = await bildPruefen();
+if (!groesse) warnOderStopp(`Bild nicht öffentlich als JPEG erreichbar: ${bildUrl}`);
 console.log(`Konten: X ${x.name} (${x.type})${ig ? `, Instagram ${ig.name} (${ig.type})` : ''}. Bild ${groesse} Bytes.`);
 
 const bild = [{ image: { url: bildUrl } }];
