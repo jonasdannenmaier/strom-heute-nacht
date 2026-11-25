@@ -1,0 +1,13 @@
+{
+  "name": "strom-heute-nacht",
+  "private": true,
+  "type": "module",
+  "description": "Täglicher Beitrag „Strom heute Nacht“ aus den Day-Ahead-Börsenpreisen (Ampena)",
+  "scripts": {
+    "bauen": "node bauen.mjs",
+    "probe": "node bauen.mjs && TROCKEN=1 node posten.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.34.4"
+  }
+}

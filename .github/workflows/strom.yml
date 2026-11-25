@@ -1,0 +1,82 @@
+# "Strom heute Nacht" täglich bauen und posten (X täglich, Instagram Mo/Mi/Fr), ohne Laptop.
+# Vier Versuche am Nachmittag, weil die Börsenpreise für die Nacht nicht immer zur selben Zeit vorliegen.
+# Ein Versuch, der nichts zu tun hat (schon gepostet, Preise noch nicht da), endet grün.
+# Rot heißt: nicht gepostet und gemeldet (GitHub schickt dann eine Mail an den Konto-Inhaber).
+name: Strom heute Nacht
+
+on:
+  schedule:
+    - cron: '50 12 * * *'   # 13:50 Winterzeit / 14:50 Sommerzeit
+    - cron: '35 13 * * *'
+    - cron: '20 14 * * *'
+    - cron: '5 15 * * *'    # letzter Versuch, 16:05 / 17:05
+  workflow_dispatch:
+    inputs:
+      trocken:
+        description: '1 = Probelauf (nichts posten), 0 = echt posten'
+        default: '1'
+
+concurrency:
+  group: strom-heute-nacht
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  posten:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TZ: Europe/Berlin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+
+      - name: Heute schon gepostet?
+        id: schon
+        run: |
+          TAG=$(date +%F)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [ -f "gepostet/$TAG.json" ]; then echo "fertig=1" >> "$GITHUB_OUTPUT"; echo "Heute schon gepostet."; fi
+
+      - name: Bild bauen und prüfen
+        id: bauen
+        if: steps.schon.outputs.fertig != '1'
+        run: |
+          export BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          set +e; node bauen.mjs "${{ steps.schon.outputs.tag }}"; rc=$?; set -e
+          if [ "$rc" -eq 2 ]; then
+            if [ "$(date -u +%H)" -ge 15 ]; then echo "::error::Preise für heute Nacht auch beim letzten Versuch nicht vollständig. Nicht gepostet."; exit 1; fi
+            echo "warten=1" >> "$GITHUB_OUTPUT"; echo "Preise noch nicht vollständig, der nächste Versuch kommt."; exit 0
+          fi
+          if [ "$rc" -eq 3 ]; then echo "::error::Auffälligkeit (siehe oben). Nicht gepostet."; fi
+          exit "$rc"
+
+      - name: Bild öffentlich ablegen
+        if: steps.schon.outputs.fertig != '1' && steps.bauen.outputs.warten != '1'
+        run: |
+          git config user.name "strom-heute-nacht"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bilder
+          git diff --cached --quiet || { git commit -m "Bild ${{ steps.schon.outputs.tag }}"; git push; }
+
+      - name: Posten
+        if: steps.schon.outputs.fertig != '1' && steps.bauen.outputs.warten != '1'
+        env:
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          BILD_BASIS: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}
+          TROCKEN: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.trocken != '0' && '1' || '0' }}
+        run: node posten.mjs "${{ steps.schon.outputs.tag }}"
+
+      - name: Gepostet vermerken
+        if: always() && steps.schon.outputs.fertig != '1' && hashFiles(format('gepostet/{0}.json', steps.schon.outputs.tag)) != ''
+        run: |
+          git config user.name "strom-heute-nacht"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gepostet
+          git diff --cached --quiet || { git commit -m "Gepostet ${{ steps.schon.outputs.tag }}"; git push; }
