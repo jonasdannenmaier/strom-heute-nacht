@@ -2,6 +2,7 @@
 # Vier Versuche am Nachmittag, weil die Börsenpreise für die Nacht nicht immer zur selben Zeit vorliegen.
 # Ein Versuch, der nichts zu tun hat (schon gepostet, Preise noch nicht da), endet grün.
 # Rot heißt: nicht gepostet und gemeldet (GitHub schickt dann eine Mail an den Konto-Inhaber).
+# Zeitplan am 26.11.2026 neu angemeldet (die geplanten Läufe waren nach dem Umstellen auf öffentlich nicht angesprungen).
 name: Strom heute Nacht
 
 on:
