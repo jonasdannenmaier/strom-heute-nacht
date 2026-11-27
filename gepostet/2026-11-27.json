@@ -1,0 +1,25 @@
+{
+ "tag": "2026-11-27",
+ "bild": "https://raw.githubusercontent.com/jonasdannenmaier/strom-heute-nacht/main/bilder/strom-2026-11-27.jpg",
+ "kennzahlen": {
+  "von": 4,
+  "bis": 7,
+  "guenstig": 19.21,
+  "euro_40kwh": 6.17,
+  "quelle": "Bundesnetzagentur | SMARD.de"
+ },
+ "beitraege": [
+  {
+   "wo": "x",
+   "id": "6b098cfdbb117e5ba74ed89b",
+   "dueAt": "2026-11-27T14:00:29.431Z",
+   "status": "sent"
+  },
+  {
+   "wo": "instagram",
+   "id": "6b098cff34d224b14a8a2746",
+   "dueAt": "2026-11-27T17:05:00.000Z",
+   "status": "scheduled"
+  }
+ ]
+}
