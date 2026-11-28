@@ -1,0 +1,19 @@
+{
+ "tag": "2026-11-28",
+ "bild": "https://raw.githubusercontent.com/jonasdannenmaier/strom-heute-nacht/main/bilder/strom-2026-11-28.jpg",
+ "kennzahlen": {
+  "von": 4,
+  "bis": 7,
+  "guenstig": 14.25,
+  "euro_40kwh": 2.88,
+  "quelle": "Bundesnetzagentur | SMARD.de"
+ },
+ "beitraege": [
+  {
+   "wo": "x",
+   "id": "6b0adc04b793a21e71ea10e3",
+   "dueAt": "2026-11-28T13:49:56.056Z",
+   "status": "sent"
+  }
+ ]
+}
